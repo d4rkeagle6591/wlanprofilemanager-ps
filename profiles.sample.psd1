@@ -18,8 +18,11 @@
     # Other networks
     # Use the Wifi name (= SSID) as the key
     #  - ip/mask/gateway should always be set together
+    #  - ip/mask should always be set together if gateway is set to none
     #  - dns/dns_alternate should always be set together
     #  - Use keyword "auto" for DHCP
+    #  - Use keyword "none" for setting an interface without a gateway
+    #      - For use when an ethernet interface exists as the gateway
 
     "WIFI_SSID_NAME" = @{
         # Set specific IP
