@@ -1,4 +1,4 @@
-﻿#requires -RunAsAdministrator
+#requires -RunAsAdministrator
 
 <#
 .SYNOPSIS
@@ -154,7 +154,11 @@ try {
     } else {
         # Set a static IP address
         $ipAdress = [IPAddress]$newProfile.ip
-        $ipAdressGw = [IPAddress]$newProfile.gateway
+        If ($newProfile.gateway -match "\b(([01]?\d?\d|2[0-4]\d|25[0-5])\.){3}([01]?\d?\d|2[0-4]\d|25[0-5])\b") {
+            $ipAdressGw = [IPAddress]$newProfile.gateway
+        } else {
+            $ipAdressGw = $newProfile.gateway
+        }
         $prefixLength = ComputePrefixLengthFromMaskSubnet($newProfile.mask)
 
         if (($ipAdress -eq $netIPConfiguration.IPv4Address.IPv4Address) -and
@@ -170,7 +174,11 @@ try {
             Write-Host " > Disable DHCP"
             Set-NetIPInterface -InterfaceIndex $currentItfIndex -Dhcp Disabled
             Write-Host " > Set $ipAdress/$prefixLength (gw $ipAdressGw)"
-            New-NetIPAddress –InterfaceIndex $currentItfIndex -AddressFamily IPv4 -IPAddress $ipAdress –PrefixLength $prefixLength -DefaultGateway $ipAdressGw | out-null
+            If ($ipAdressGw -eq "none") {
+                New-NetIPAddress –InterfaceIndex $currentItfIndex -AddressFamily IPv4 -IPAddress $ipAdress –PrefixLength $prefixLength | out-null
+            } else {
+                New-NetIPAddress –InterfaceIndex $currentItfIndex -AddressFamily IPv4 -IPAddress $ipAdress –PrefixLength $prefixLength -DefaultGateway $ipAdressGw | out-null
+            }
             Write-Host " > Done"
 
             $need_restart = $true
