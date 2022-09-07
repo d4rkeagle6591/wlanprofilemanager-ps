@@ -110,9 +110,9 @@ Function LockFileExists() {
     if (Test-Path $script:LOCK_FILEPATH) {
         # Will ignore if older than a minute
         if ((((Get-Date) - (Get-Item $script:LOCK_FILEPATH).CreationTime)) -gt (New-TimeSpan -minutes 1)) {
-            Write-Error "Lock file found, but too old. Continuing"
+            Write-Host "Lock file found, but too old. Continuing"
         } else {
-            Write-Error "Lock file found, aborting"
+            Write-Host "Lock file found, aborting"
             return $true
         }
     }
@@ -244,7 +244,7 @@ Function ConfigProfilesVerify($config) {
         } else {
             foreach ($paramKey in $config[$key].Keys) {
                 $value = $config[$key][$paramKey]
-                if ($value -ne "auto")
+                if (($value -ne "auto") -and ($value -ne "none"))
                 {
                     try {
                         # If param not auto, then it should be a valid IP address
@@ -262,8 +262,12 @@ Function ConfigProfilesVerify($config) {
             if ((($config[$key].ip -eq "auto") -or ($config[$key].mask -eq "auto") -or ($config[$key].gateway -eq "auto")) -and
                 (($config[$key].ip -ne "auto") -or ($config[$key].mask -ne "auto") -or ($config[$key].gateway -ne "auto")))
             {
-                Write-Error "Error in profile ${profileKey}: ip, mask and gateway must be set to DHCP together"
-                return $false
+                if ((($config[$key].ip -eq "auto") -or ($config[$key].mask -eq "auto") -or ($config[$key].gateway -eq "none")) -and
+                    (($config[$key].ip -ne "auto") -or ($config[$key].mask -ne "auto") -or ($config[$key].gateway -ne "none")))
+                {
+                    Write-Error "Error in profile ${profileKey}: ip, mask and gateway must be set to DHCP together, or ip and mask set together with gateway to none."
+                    return $false
+                }
             }
 
             # Check if DNS or alternative DNS is DHCP and not the other
